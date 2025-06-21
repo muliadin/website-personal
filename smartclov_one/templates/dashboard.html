@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SmartClov Dryer - Professional Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: black;
+            color: white;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: #222;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h2 {
+            margin-top: 0;
+            color: white;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .sensor-readings {
+            font-size: 24px;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+        
+        .timestamp {
+            font-size: 14px;
+            color: #aaa;
+            margin-top: 15px;
+            text-align: right;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        input[type="number"] {
+            padding: 8px 12px;
+            background: #333;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 6px;
+            flex-grow: 1;
+        }
+        
+        button {
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-on {
+            background: #27ae60;
+        }
+        
+        .status-off {
+            background: #e74c3c;
+        }
+        
+        .finished {
+            background: #f39c12;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 15px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-warning {
+            display: none;
+            background: #FFF3CD;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="dataStatus" class="status-warning">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>Menunggu data pertama dari perangkat...</span>
+    </div>
+
+    <div class="dashboard">
+        <!-- Sensor Data Card -->
+        <div class="card">
+            <h2>Environmental Data</h2>
+            <div class="sensor-readings">
+                <div>Temperature: <strong id="tempValueDisplay">0°C</strong></div>
+                <div>Humidity: <strong id="humValueDisplay">0%</strong></div>
+            </div>
+            <div class="timestamp">
+                Last updated: <span id="updateTime">-</span>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="card">
+            <h2>Control Panel</h2>
+            <div class="status-item">
+                <span class="status-indicator status-off" id="heaterIndicator"></span>
+                <span>Heater: <strong id="heaterStatus">OFF</strong></span>
+            </div>
+            <div class="status-item">
+                <span class="status-indicator status-off" id="fanIndicator"></span>
+                <span>Fan: <strong id="fanStatus">OFF</strong></span>
+            </div>
+            <div class="status-item">
+                <span>Process Status: <strong id="processStatus">Running</strong></span>
+            </div>
+            
+            <div class="controls">
+                <input type="number" id="targetMoisture" placeholder="Target Moisture %" value="16" min="0" max="100">
+                <input type="number" id="targetTime" placeholder="Hours" value="4" min="1" max="24">
+                <button onclick="updateTarget()">Update</button>
+            </div>
+        </div>
+
+        <!-- AI Analytics -->
+        <div class="card">
+            <h2>AI Analytics</h2>
+            <div class="analytics-item">
+                <label>Clove Status:</label>
+                <div class="value" id="aiStatus">-</div>
+            </div>
+            <div class="analytics-item">
+                <label>Moisture Content:</label>
+                <div class="value" id="aiMoisture">-</div>
+            </div>
+            <div class="analytics-item">
+                <label>Elapsed Time:</label>
+                <div class="value" id="elapsedTime">00:00:00</div>
+            </div>
+            <div class="analytics-item">
+                <label>RTC Time:</label>
+                <div class="value" id="rtcTime">00:00:00</div>
+            </div>
+            
+            <div id="finishAlert" class="finished" style="display:none;">
+                PROCESS COMPLETED!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update device status with visual indicators
+        function updateStatus(elementId, status) {
+            const element = document.getElementById(elementId + 'Status');
+            const indicator = document.getElementById(elementId + 'Indicator');
+            
+            element.textContent = status;
+            if (status === 'ON') {
+                indicator.classList.remove('status-off');
+                indicator.classList.add('status-on');
+            } else {
+                indicator.classList.remove('status-on');
+                indicator.classList.add('status-off');
+            }
+        }
+
+        // Real-time data update
+        async function updateData() {
+            try {
+                const response = await fetch('/get-data');
+                if (!response.ok) throw new Error('Network error');
+                
+                const data = await response.json();
+                const now = new Date();
+                
+                // Check for default data values
+                if (data.temperature_now === 25.0 && data.humidity_now === 60.0) {
+                    document.getElementById('dataStatus').style.display = 'flex';
+                } else {
+                    document.getElementById('dataStatus').style.display = 'none';
+                    
+                    // Update displayed values
+                    document.getElementById('tempValueDisplay').textContent = `${data.temperature_now?.toFixed(1) || 0}°C`;
+                    document.getElementById('humValueDisplay').textContent = `${data.humidity_now?.toFixed(1) || 0}%`;
+                    document.getElementById('updateTime').textContent = now.toLocaleTimeString();
+                    
+                    // Update device status
+                    updateStatus('heater', data.heater_status);
+                    updateStatus('fan', data.fan_status);
+                    
+                    // Update analytics
+                    document.getElementById('aiStatus').textContent = data.clove_status || '-';
+                    document.getElementById('aiMoisture').textContent = `${data.moisture_content?.toFixed(1) || '-'}%`;
+                    document.getElementById('elapsedTime').textContent = data.elapsed_time || '00:00:00';
+                    document.getElementById('rtcTime').textContent = data.rtc || '00:00:00';
+                    
+                    // Process status
+                    const processElem = document.getElementById('processStatus');
+                    const finishAlert = document.getElementById('finishAlert');
+                    if (data.process_finish) {
+                        processElem.textContent = "Completed";
+                        finishAlert.style.display = 'block';
+                    } else {
+                        processElem.textContent = "Running"; 
+                        finishAlert.style.display = 'none';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+            }
+        }
+
+        // Update target values
+        async function updateTarget() {
+            const moisture = document.getElementById('targetMoisture').value;
+            const time = document.getElementById('targetTime').value;
+            
+            try {
+                const response = await fetch('/update-target', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_moisture: moisture,
+                        target_time: time
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('Target parameters updated successfully!');
+                } else {
+                    alert('Failed to update target parameters');
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                alert('Error updating target parameters');
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            setInterval(updateData, 2000);
+            updateData(); // Initial load
+        });
+    </script>
+</body>
+</html>

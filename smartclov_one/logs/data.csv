@@ -1,0 +1,5 @@
+timestamp,temperature,humidity,moisture_pred,status,heater,fan
+2025-06-18T23:31:55.260760,34.1,68.1,35.95,Setengah Kering,ON,ON
+
+2025-06-19T08:17:29.158573,25.9,96.9,44.25,Basah,ON,ON,16,4
+2025-06-19T08:18:29.420133,25.8,96.9,44.25,Basah,ON,ON,16,4

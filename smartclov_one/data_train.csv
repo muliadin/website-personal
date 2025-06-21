@@ -1,0 +1,20 @@
+humidity_now,temperature_now,time_remaining,status_kering,moisture_content
+75,35,3600,Basah,45
+70,38,3200,Basah,40
+65,40,2800,Setengah Kering,30
+60,43,2400,Setengah Kering,25
+55,45,2000,Kering,15
+50,47,1600,Kering,13
+48,48,1200,Kering,12
+56,38,2262,Setengah Kering,29
+63,48,2229,Setengah Kering,29
+62,44,3036,Setengah Kering,36
+52,45,2586,Setengah Kering,27
+77,50,2135,Setengah Kering,35
+49,43,1293,Kering,19
+73,37,1584,Setengah Kering,31
+63,49,958,Setengah Kering,20
+75,43,1863,Setengah Kering,31
+67,42,1270,Setengah Kering,24
+55,39,3595,Setengah Kering,22
+53,39,3088,Setengah Kering,34
